@@ -13,17 +13,23 @@ class TestCase:
         """
         self.test_method_name = test_method_name
 
-    def run(self):
+    def run(self, result):
         """
-        Executa o teste seguindo o padrão template method:
-        1. Chama o método set_up
-        2. Executa o método de teste
-        3. Chama o método tear_down
+        Executa o teste seguindo o padrão template method e registra os resultados.
+
+        Args:
+            result: Objeto TestResult para armazenar os resultados da execução
         """
-        self.set_up()    # chama método de setup
-        test_method = getattr(self, self.test_method_name)
-        test_method()    # chama método de teste
-        self.tear_down() # chama método de teardown
+        result.test_started()
+        self.set_up()
+        try:
+            test_method = getattr(self, self.test_method_name)
+            test_method()
+        except AssertionError as e:
+            result.add_failure(self.test_method_name)
+        except Exception as e:
+            result.add_error(self.test_method_name)
+        self.tear_down()
 
     def set_up(self):
         """
@@ -39,3 +45,51 @@ class TestCase:
         """
         pass
 
+
+class TestResult:
+    """
+    Classe responsável por coletar e sumarizar os resultados da execução dos testes.
+    """
+    RUN_MSG = 'run'
+    FAILURE_MSG = 'failed'
+    ERROR_MSG = 'error'
+
+    def __init__(self, suite_name=None):
+        self.run_count = 0
+        self.failures = []
+        self.errors = []
+
+    def test_started(self):
+        """
+        Incrementa o contador de testes executados.
+        """
+        self.run_count += 1
+
+    def add_failure(self, test):
+        """
+        Adiciona um teste à lista de falhas.
+
+        Args:
+            test: Nome do método de teste que falhou (AssertionError)
+        """
+        self.failures.append(test)
+
+    def add_error(self, test):
+        """
+        Adiciona um teste à lista de erros.
+
+        Args:
+            test: Nome do método de teste que gerou erro (Exception)
+        """
+        self.errors.append(test)
+
+    def summary(self):
+        """
+        Retorna um resumo dos resultados dos testes.
+
+        Returns:
+            String com formato "X run, Y failed, Z error"
+        """
+        return f'{self.run_count} {self.RUN_MSG}, ' \
+               f'{str(len(self.failures))} {self.FAILURE_MSG}, ' \
+               f'{str(len(self.errors))} {self.ERROR_MSG}'
