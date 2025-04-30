@@ -95,6 +95,36 @@ class TestResult:
                f'{str(len(self.errors))} {self.ERROR_MSG}'
 
 
+class TestSuite:
+    """
+    Representa uma coleção de casos de teste.
+    Implementa o padrão Composite para permitir que uma suíte seja
+    tratada da mesma forma que um caso de teste individual.
+    """
+    def __init__(self):
+        self.tests = []
+
+    def add_test(self, test):
+        """
+        Adiciona um teste à suíte.
+        O teste pode ser um TestCase ou outro TestSuite.
+
+        Args:
+            test: TestCase ou TestSuite a ser adicionado
+        """
+        self.tests.append(test)
+
+    def run(self, result):
+        """
+        Executa todos os testes na suíte, coletando os resultados.
+
+        Args:
+            result: Objeto TestResult para armazenar os resultados da execução
+        """
+        for test in self.tests:
+            test.run(result)
+
+
 # Classe auxiliar que simula uma classe de teste com diferentes tipos de resultados
 class TestStub(TestCase):
     """
@@ -109,39 +139,6 @@ class TestStub(TestCase):
 
     def test_error(self):
         raise Exception
-
-
-# Classe para testar TestCase
-class TestCaseTest(TestCase):
-    """
-    Classe que testa o comportamento da classe TestCase.
-    """
-    def set_up(self):
-        self.result = TestResult()
-
-    def test_result_success_run(self):
-        stub = TestStub('test_success')
-        stub.run(self.result)
-        assert self.result.summary() == '1 run, 0 failed, 0 error'
-
-    def test_result_failure_run(self):
-        stub = TestStub('test_failure')
-        stub.run(self.result)
-        assert self.result.summary() == '1 run, 1 failed, 0 error'
-
-    def test_result_error_run(self):
-        stub = TestStub('test_error')
-        stub.run(self.result)
-        assert self.result.summary() == '1 run, 0 failed, 1 error'
-
-    def test_result_multiple_run(self):
-        stub = TestStub('test_success')
-        stub.run(self.result)
-        stub = TestStub('test_failure')
-        stub.run(self.result)
-        stub = TestStub('test_error')
-        stub.run(self.result)
-        assert self.result.summary() == '3 run, 1 failed, 1 error'
 
 
 # Classe spy para verificar o comportamento do template method
@@ -170,7 +167,7 @@ class TestSpy(TestCase):
         self.log += "tear_down"
 
 
-# Adicionando mais testes à TestCaseTest para verificar o template method
+# Classe para testar TestCase
 class TestCaseTest(TestCase):
     """
     Classe que testa o comportamento da classe TestCase.
@@ -223,35 +220,98 @@ class TestCaseTest(TestCase):
         assert spy.log == "set_up test_method tear_down"
 
 
+# Classe para testar TestSuite
+class TestSuiteTest(TestCase):
+    """
+    Classe que testa o comportamento da classe TestSuite.
+    """
+    def test_suite_size(self):
+        suite = TestSuite()
+
+        suite.add_test(TestStub('test_success'))
+        suite.add_test(TestStub('test_failure'))
+        suite.add_test(TestStub('test_error'))
+
+        assert len(suite.tests) == 3
+
+    def test_suite_success_run(self):
+        result = TestResult()
+        suite = TestSuite()
+        suite.add_test(TestStub('test_success'))
+
+        suite.run(result)
+
+        assert result.summary() == '1 run, 0 failed, 0 error'
+
+    def test_suite_multiple_run(self):
+        result = TestResult()
+        suite = TestSuite()
+        suite.add_test(TestStub('test_success'))
+        suite.add_test(TestStub('test_failure'))
+        suite.add_test(TestStub('test_error'))
+
+        suite.run(result)
+
+        assert result.summary() == '3 run, 1 failed, 1 error'
+
+
 # Código para executar os testes
 if __name__ == "__main__":
+    # Executando os testes individuais para TestCase
+    print("Executando testes para TestCase...")
     result = TestResult()
-
-    # Executando os testes da classe TestCaseTest
-    print("Executando testes para verificar o comportamento de TestCase...")
 
     test = TestCaseTest('test_result_success_run')
     test.run(result)
-
     test = TestCaseTest('test_result_failure_run')
     test.run(result)
-
     test = TestCaseTest('test_result_error_run')
     test.run(result)
-
     test = TestCaseTest('test_result_multiple_run')
     test.run(result)
-
     test = TestCaseTest('test_was_set_up')
     test.run(result)
-
     test = TestCaseTest('test_was_run')
     test.run(result)
-
     test = TestCaseTest('test_was_tear_down')
     test.run(result)
-
     test = TestCaseTest('test_template_method')
     test.run(result)
 
     print(result.summary())
+
+    # Executando os testes para TestSuite
+    print("\nExecutando testes para TestSuite...")
+    result = TestResult()
+
+    test = TestSuiteTest('test_suite_size')
+    test.run(result)
+    test = TestSuiteTest('test_suite_success_run')
+    test.run(result)
+    test = TestSuiteTest('test_suite_multiple_run')
+    test.run(result)
+
+    print(result.summary())
+
+    # Executando todos os testes usando uma TestSuite
+    print("\nExecutando todos os testes usando TestSuite...")
+    result = TestResult()
+    suite = TestSuite()
+
+    # Adicionando todos os testes de TestCaseTest
+    suite.add_test(TestCaseTest('test_result_success_run'))
+    suite.add_test(TestCaseTest('test_result_failure_run'))
+    suite.add_test(TestCaseTest('test_result_error_run'))
+    suite.add_test(TestCaseTest('test_result_multiple_run'))
+    suite.add_test(TestCaseTest('test_was_set_up'))
+    suite.add_test(TestCaseTest('test_was_run'))
+    suite.add_test(TestCaseTest('test_was_tear_down'))
+    suite.add_test(TestCaseTest('test_template_method'))
+
+    # Adicionando todos os testes de TestSuiteTest
+    suite.add_test(TestSuiteTest('test_suite_size'))
+    suite.add_test(TestSuiteTest('test_suite_success_run'))
+    suite.add_test(TestSuiteTest('test_suite_multiple_run'))
+
+    suite.run(result)
+    print(result.summary())  # Deve mostrar "11 run, 0 failed, 0 error"
