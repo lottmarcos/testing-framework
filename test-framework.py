@@ -354,45 +354,82 @@ class TestLoaderTest(TestCase):
         assert names == []
 
 
-# Demonstração do uso do framework
-if __name__ == "__main__":
-    # Exemplo 1: Executando testes manualmente
-    print("Exemplo 1: Executando testes manualmente")
-    result = TestResult()
-    test = TestLoaderTest('test_create_suite')
-    test.run(result)
-    print(result.summary())  # Saída: "1 run, 0 failed, 0 error"
-    print()
+def run_all_tests():
+    """
+    Executa todos os testes do framework e exibe um relatório consolidado.
 
-    # Exemplo 2: Usando TestLoader para descobrir testes automaticamente
-    print("Exemplo 2: Usando TestLoader para descobrir testes")
-    result = TestResult()
+    Esta função usa TestLoader para descobrir automaticamente todos os
+    testes nas classes de teste, agrupa-os em uma TestSuite principal e
+    executa-os usando um TestRunner.
+    """
+    print("="*50)
+    print("Executando todos os testes do framework")
+    print("="*50)
+
+    # Cria um loader para descobrir os testes automaticamente
     loader = TestLoader()
-    suite = loader.make_suite(TestLoaderTest)
-    suite.run(result)
-    print(result.summary())  # Saída: "4 run, 0 failed, 0 error"
-    print()
 
-    # Exemplo 3: Usando TestRunner para orquestrar a execução
-    print("Exemplo 3: Usando TestRunner para orquestrar a execução")
-    loader = TestLoader()
-    suite = loader.make_suite(TestLoaderTest)
-
-    runner = TestRunner()
-    runner.run(suite)  # Saída: "4 run, 0 failed, 0 error"
-    print()
-
-    # Exemplo 4: Executando todos os testes
-    print("Exemplo 4: Executando todos os testes")
-    loader = TestLoader()
+    # Cria suítes individuais para cada classe de teste
     test_case_suite = loader.make_suite(TestCaseTest)
     test_suite_suite = loader.make_suite(TestSuiteTest)
-    test_load_suite = loader.make_suite(TestLoaderTest)
+    test_loader_suite = loader.make_suite(TestLoaderTest)
 
-    suite = TestSuite()
-    suite.add_test(test_case_suite)
-    suite.add_test(test_suite_suite)
-    suite.add_test(test_load_suite)
+    # Imprime informações sobre os testes encontrados
+    print(f"Testes de TestCase: {len(test_case_suite.tests)} testes")
+    print(f"Testes de TestSuite: {len(test_suite_suite.tests)} testes")
+    print(f"Testes de TestLoader: {len(test_loader_suite.tests)} testes")
+    print("-"*50)
 
+    # Cria uma suíte principal para agregar todas as outras
+    main_suite = TestSuite()
+    main_suite.add_test(test_case_suite)
+    main_suite.add_test(test_suite_suite)
+    main_suite.add_test(test_loader_suite)
+
+    # Executa todos os testes usando um TestRunner
     runner = TestRunner()
-    runner.run(suite)  # Saída: "15 run, 0 failed, 0 error"
+    result = runner.run(main_suite)
+
+    # Fornece informações adicionais sobre a execução
+    print("-"*50)
+    print(f"Total de testes executados: {result.run_count}")
+    if len(result.failures) > 0:
+        print(f"Falhas: {result.failures}")
+    if len(result.errors) > 0:
+        print(f"Erros: {result.errors}")
+    print("="*50)
+
+    return result
+
+
+# Demonstração do uso do framework
+if __name__ == "__main__":
+    print("Escolha uma opção:")
+    print("1 - Executar um teste específico")
+    print("2 - Executar todos os testes de uma classe")
+    print("3 - Executar todos os testes do framework")
+
+    option = input("Opção: ")
+
+    if option == "1":
+        # Exemplo de execução de um teste específico
+        print("\nExecutando um teste específico (TestLoaderTest.test_create_suite)")
+        result = TestResult()
+        test = TestLoaderTest('test_create_suite')
+        test.run(result)
+        print(result.summary())
+
+    elif option == "2":
+        # Exemplo de execução de todos os testes de uma classe
+        print("\nExecutando todos os testes da classe TestLoaderTest")
+        loader = TestLoader()
+        suite = loader.make_suite(TestLoaderTest)
+        runner = TestRunner()
+        runner.run(suite)
+
+    elif option == "3":
+        # Executa todos os testes do framework
+        run_all_tests()
+
+    else:
+        print("Opção inválida!")
