@@ -45,6 +45,65 @@ class TestCase:
         """
         pass
 
+    # Comandos Assert personalizados
+    def assert_equal(self, first, second):
+        """
+        Verifica se dois objetos são iguais.
+
+        Args:
+            first: Primeiro objeto a ser comparado
+            second: Segundo objeto a ser comparado
+
+        Raises:
+            AssertionError: Se os objetos não forem iguais
+        """
+        if first != second:
+            msg = f'{first} != {second}'
+            raise AssertionError(msg)
+
+    def assert_true(self, expr):
+        """
+        Verifica se uma expressão é verdadeira.
+
+        Args:
+            expr: Expressão a ser verificada
+
+        Raises:
+            AssertionError: Se a expressão for falsa
+        """
+        if not expr:
+            msg = f'{expr} is not true'
+            raise AssertionError(msg)
+
+    def assert_false(self, expr):
+        """
+        Verifica se uma expressão é falsa.
+
+        Args:
+            expr: Expressão a ser verificada
+
+        Raises:
+            AssertionError: Se a expressão for verdadeira
+        """
+        if expr:
+            msg = f'{expr} is not false'
+            raise AssertionError(msg)
+
+    def assert_in(self, member, container):
+        """
+        Verifica se um elemento está contido em um container.
+
+        Args:
+            member: Elemento a ser verificado
+            container: Container a ser verificado
+
+        Raises:
+            AssertionError: Se o elemento não estiver no container
+        """
+        if member not in container:
+            msg = f'{member} not found in {container}'
+            raise AssertionError(msg)
+
 
 class TestResult:
     """
@@ -241,17 +300,17 @@ class TestCaseTest(TestCase):
     def test_result_success_run(self):
         stub = TestStub('test_success')
         stub.run(self.result)
-        assert self.result.summary() == '1 run, 0 failed, 0 error'
+        self.assert_equal(self.result.summary(), '1 run, 0 failed, 0 error')
 
     def test_result_failure_run(self):
         stub = TestStub('test_failure')
         stub.run(self.result)
-        assert self.result.summary() == '1 run, 1 failed, 0 error'
+        self.assert_equal(self.result.summary(), '1 run, 1 failed, 0 error')
 
     def test_result_error_run(self):
         stub = TestStub('test_error')
         stub.run(self.result)
-        assert self.result.summary() == '1 run, 0 failed, 1 error'
+        self.assert_equal(self.result.summary(), '1 run, 0 failed, 1 error')
 
     def test_result_multiple_run(self):
         stub = TestStub('test_success')
@@ -260,29 +319,53 @@ class TestCaseTest(TestCase):
         stub.run(self.result)
         stub = TestStub('test_error')
         stub.run(self.result)
-        assert self.result.summary() == '3 run, 1 failed, 1 error'
+        self.assert_equal(self.result.summary(), '3 run, 1 failed, 1 error')
 
     def test_was_set_up(self):
         spy = TestSpy('test_method')
         spy.run(self.result)
-        assert spy.was_set_up
+        self.assert_true(spy.was_set_up)
 
     def test_was_run(self):
         spy = TestSpy('test_method')
         spy.run(self.result)
-        assert spy.was_run
+        self.assert_true(spy.was_run)
 
     def test_was_tear_down(self):
         spy = TestSpy('test_method')
         spy.run(self.result)
-        assert spy.was_tear_down
+        self.assert_true(spy.was_tear_down)
 
     def test_template_method(self):
         spy = TestSpy('test_method')
         spy.run(self.result)
-        assert spy.log == "set_up test_method tear_down"
+        self.assert_equal(spy.log, "set_up test_method tear_down")
 
+    # Testes para os métodos de asserção
+    def test_assert_true(self):
+        self.assert_true(True)
 
+    def test_assert_false(self):
+        self.assert_false(False)
+
+    def test_assert_equal(self):
+        self.assert_equal("", "")
+        self.assert_equal("foo", "foo")
+        self.assert_equal([], [])
+        self.assert_equal(['foo'], ['foo'])
+        self.assert_equal((), ())
+        self.assert_equal(('foo',), ('foo',))
+        self.assert_equal({}, {})
+        self.assert_equal({'foo'}, {'foo'})
+
+    def test_assert_in(self):
+        animals = {'monkey': 'banana', 'cow': 'grass', 'seal': 'fish'}
+        self.assert_in('a', 'abc')
+        self.assert_in('foo', ['foo'])
+        self.assert_in(1, [1, 2, 3])
+        self.assert_in('monkey', animals)
+
+# Classe para testar TestSuite
 # Classe para testar TestSuite
 class TestSuiteTest(TestCase):
     """
@@ -295,7 +378,7 @@ class TestSuiteTest(TestCase):
         suite.add_test(TestStub('test_failure'))
         suite.add_test(TestStub('test_error'))
 
-        assert len(suite.tests) == 3
+        self.assert_equal(len(suite.tests), 3)
 
     def test_suite_success_run(self):
         result = TestResult()
@@ -304,7 +387,7 @@ class TestSuiteTest(TestCase):
 
         suite.run(result)
 
-        assert result.summary() == '1 run, 0 failed, 0 error'
+        self.assert_equal(result.summary(), '1 run, 0 failed, 0 error')
 
     def test_suite_multiple_run(self):
         result = TestResult()
@@ -315,7 +398,7 @@ class TestSuiteTest(TestCase):
 
         suite.run(result)
 
-        assert result.summary() == '3 run, 1 failed, 1 error'
+        self.assert_equal(result.summary(), '3 run, 1 failed, 1 error')
 
 
 # Classe para testar TestLoader
@@ -326,7 +409,7 @@ class TestLoaderTest(TestCase):
     def test_create_suite(self):
         loader = TestLoader()
         suite = loader.make_suite(TestStub)
-        assert len(suite.tests) == 3
+        self.assert_equal(len(suite.tests), 3)
 
     def test_create_suite_of_suites(self):
         loader = TestLoader()
@@ -337,12 +420,12 @@ class TestLoaderTest(TestCase):
         suite.add_test(stub_suite)
         suite.add_test(spy_suite)
 
-        assert len(suite.tests) == 2
+        self.assert_equal(len(suite.tests), 2)
 
     def test_get_multiple_test_case_names(self):
         loader = TestLoader()
         names = loader.get_test_case_names(TestStub)
-        assert names == ['test_error', 'test_failure', 'test_success']
+        self.assert_equal(names, ['test_error', 'test_failure', 'test_success'])
 
     def test_get_no_test_case_names(self):
         class Test(TestCase):
@@ -351,16 +434,33 @@ class TestLoaderTest(TestCase):
 
         loader = TestLoader()
         names = loader.get_test_case_names(Test)
-        assert names == []
+        self.assert_equal(names, [])
+
+
+# Exemplo de uso dos métodos de asserção personalizados
+class AssertExampleTest(TestCase):
+    """
+    Exemplo de uso dos métodos de asserção personalizados.
+    """
+    def test_assert_basic_examples(self):
+        # Verificações básicas
+        self.assert_true(1 < 2)
+        self.assert_false(1 > 2)
+        self.assert_equal(1 + 1, 2)
+        self.assert_in(3, [1, 2, 3, 4])
+
+    def test_assert_with_different_types(self):
+        # Demonstração com diversos tipos de dados
+        self.assert_equal("hello", "hello")
+        self.assert_true(bool([1, 2]))  # Lista não vazia é avaliada como True
+        self.assert_false(bool([]))     # Lista vazia é avaliada como False
+        self.assert_in("key", {"key": "value"})
 
 
 def run_all_tests():
     """
     Executa todos os testes do framework e exibe um relatório consolidado.
-
-    Esta função usa TestLoader para descobrir automaticamente todos os
-    testes nas classes de teste, agrupa-os em uma TestSuite principal e
-    executa-os usando um TestRunner.
+    Agora inclui os testes para os comandos assert.
     """
     print("="*50)
     print("Executando todos os testes do framework")
@@ -373,11 +473,13 @@ def run_all_tests():
     test_case_suite = loader.make_suite(TestCaseTest)
     test_suite_suite = loader.make_suite(TestSuiteTest)
     test_loader_suite = loader.make_suite(TestLoaderTest)
+    assert_example_suite = loader.make_suite(AssertExampleTest)
 
     # Imprime informações sobre os testes encontrados
     print(f"Testes de TestCase: {len(test_case_suite.tests)} testes")
     print(f"Testes de TestSuite: {len(test_suite_suite.tests)} testes")
     print(f"Testes de TestLoader: {len(test_loader_suite.tests)} testes")
+    print(f"Testes de AssertExample: {len(assert_example_suite.tests)} testes")
     print("-"*50)
 
     # Cria uma suíte principal para agregar todas as outras
@@ -385,6 +487,7 @@ def run_all_tests():
     main_suite.add_test(test_case_suite)
     main_suite.add_test(test_suite_suite)
     main_suite.add_test(test_loader_suite)
+    main_suite.add_test(assert_example_suite)
 
     # Executa todos os testes usando um TestRunner
     runner = TestRunner()
@@ -401,35 +504,62 @@ def run_all_tests():
 
     return result
 
-
 # Demonstração do uso do framework
 if __name__ == "__main__":
+    print("Framework de teste com comandos assert")
     print("Escolha uma opção:")
     print("1 - Executar um teste específico")
     print("2 - Executar todos os testes de uma classe")
     print("3 - Executar todos os testes do framework")
+    print("4 - Executar exemplos de uso dos comandos assert")
 
     option = input("Opção: ")
 
     if option == "1":
         # Exemplo de execução de um teste específico
-        print("\nExecutando um teste específico (TestLoaderTest.test_create_suite)")
+        print("\nExecutando um teste específico (TestCaseTest.test_assert_equal)")
         result = TestResult()
-        test = TestLoaderTest('test_create_suite')
+        test = TestCaseTest('test_assert_equal')
         test.run(result)
         print(result.summary())
 
     elif option == "2":
         # Exemplo de execução de todos os testes de uma classe
-        print("\nExecutando todos os testes da classe TestLoaderTest")
+        print("\nExecutando todos os testes da classe AssertExampleTest")
         loader = TestLoader()
-        suite = loader.make_suite(TestLoaderTest)
+        suite = loader.make_suite(AssertExampleTest)
         runner = TestRunner()
         runner.run(suite)
 
     elif option == "3":
         # Executa todos os testes do framework
         run_all_tests()
+
+    elif option == "4":
+        # Exemplos simples de uso dos comandos assert
+        print("\nExemplos de uso dos comandos assert:")
+
+        try:
+            # Exemplo que deve passar
+            print("Verificando assert_equal (deve passar):")
+            example = AssertExampleTest('test_assert_basic_examples')
+            result = TestResult()
+            example.run(result)
+            print("OK!")
+
+            # Exemplo que deve falhar
+            print("\nVerificando assert_equal (deve falhar):")
+            class FailingTest(TestCase):
+                def test_failing(self):
+                    self.assert_equal(1, 2)  # Falha intencional
+
+            failing = FailingTest('test_failing')
+            result = TestResult()
+            failing.run(result)
+            print(f"Falha registrada: {result.failures}")
+
+        except Exception as e:
+            print(f"Erro: {e}")
 
     else:
         print("Opção inválida!")
